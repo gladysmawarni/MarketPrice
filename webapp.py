@@ -92,6 +92,6 @@ grouped = df.groupby(['Menu', 'Category']).agg({'Price': 'median'}).round(2)
 grouped.reset_index(inplace=True)
 grouped.columns = ['Menú', 'Categoria', 'Preço médio (€)']
 
-st.title('Análise de Preço Médio dos Restaurantes em Portugal')
+st.title('Preços de Mercado na Uber Eats / Glovo')
 
 st.dataframe(filter_dataframe(grouped), hide_index=True)
