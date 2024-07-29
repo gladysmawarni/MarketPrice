@@ -6,6 +6,7 @@ from pandas.api.types import (
 )
 import pandas as pd
 import streamlit as st
+import numpy as np
 
 # Suppress warnings related to date parsing
 warnings.filterwarnings("ignore")
@@ -86,12 +87,54 @@ def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def get_highest_rating_price(names, df):
+    final = []
+    for name in names:
+        median_price = round(df[(df['Menu'] == name) & (df['Rating'] >= 4.8) & (df['Review'] >= 1000)]['Price'].median(),2)
+        final.append((name, median_price))
+    
+    return final
+
 df = pd.read_csv("clean_data.csv")
+df_elastic = pd.read_excel('item_elasticity.xlsx')
 
 grouped = df.groupby(['Menu', 'Category']).agg({'Price': 'median'}).round(2)
 grouped.reset_index(inplace=True)
 grouped.columns = ['Menú', 'Categoria', 'Preço médio (€)']
 
-st.title('Preços de Mercado na Uber Eats / Glovo')
+names = list(grouped.Menú)
 
-st.dataframe(filter_dataframe(grouped), hide_index=True)
+high_rated = get_highest_rating_price(names, df)
+high_rated_df = pd.DataFrame(high_rated, columns=['Menú', 'Preço de Alta Classificação'])
+
+merged = grouped.merge(high_rated_df)
+
+# Create a dictionary for quick lookup
+elasticity_dict = dict(zip(df_elastic['Item'].str.lower(), df_elastic['Classification']))
+# Use lambda function to create the new 'Elasticity' column
+merged['Elasticity'] = merged['Menú'].apply(lambda x: next((elasticity_dict[item] for item in elasticity_dict if item in x.lower()), 'Unknown'))
+
+def calculate_ideal_price(row):
+    # If 'Preço de Alta Classificação' is NaN, use only 'Preço médio'
+    if pd.isna(row['Preço de Alta Classificação']):
+        base_price = row['Preço médio (€)']
+    # If median price and high rated price is the same, lower 0.01
+    elif row['Preço médio (€)'] == row['Preço de Alta Classificação']:
+        base_price = row['Preço médio (€)'] - 0.01
+    else:
+        base_price = (row['Preço médio (€)'] + (row['Preço de Alta Classificação'])) / 2
+    
+    if row['Elasticity'] == 'Elastic':
+        # For elastic items, round down to nearest 10 cents and add 9 cents
+        return np.floor(base_price * 10) / 10 + 0.09
+    else:
+        # For inelastic items, round to nearest 50 cents
+        return round(base_price * 2) / 2
+
+merged['Preço Ideal'] = merged.apply(calculate_ideal_price, axis=1)
+merged.drop(columns=['Elasticity'], inplace=True)
+
+st.title('Análise de Preço Médio dos Restaurantes em Portugal')
+
+st.dataframe(filter_dataframe(merged), hide_index=True)
+
