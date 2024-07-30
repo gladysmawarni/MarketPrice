@@ -117,7 +117,7 @@ merged['Elasticity'] = merged['Menú'].apply(lambda x: next((elasticity_dict[ite
 def calculate_ideal_price(row):
     # If 'Preço de Alta Classificação' is NaN, use only 'Preço médio'
     if pd.isna(row['Preço de Alta Classificação']):
-        base_price = row['Preço médio (€)']
+        base_price = row['Preço médio (€)'] - 0.01
     # If median price and high rated price is the same, lower 0.01
     elif row['Preço médio (€)'] == row['Preço de Alta Classificação']:
         base_price = row['Preço médio (€)'] - 0.01
