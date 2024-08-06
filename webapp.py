@@ -100,7 +100,7 @@ df_elastic = pd.read_excel('item_elasticity.xlsx')
 
 grouped = df.groupby(['Menu', 'Category']).agg({'Price': 'median'}).round(2)
 grouped.reset_index(inplace=True)
-grouped.columns = ['Menú', 'Categoria', 'Preço médio']
+grouped.columns = ['Menú', 'Categoria', 'Preço Médio']
 
 names = list(grouped.Menú)
 
@@ -117,10 +117,10 @@ merged['Elasticity'] = merged['Menú'].apply(lambda x: next((elasticity_dict[ite
 # function to calculate ideal prices for both average restaurant and high-rated restaurants
 def calculate_ideal_prices(row):
     # Calculate Preço Ideal
-    if row['Preço médio'] <= np.floor(row['Preço médio']) + 0.50:
-        preco_ideal = np.floor(row['Preço médio']) + 0.59
+    if row['Preço Médio'] <= np.floor(row['Preço Médio']) + 0.50:
+        preco_ideal = np.floor(row['Preço Médio']) + 0.59
     else:
-        preco_ideal = np.floor(row['Preço médio']) + 0.99
+        preco_ideal = np.floor(row['Preço Médio']) + 0.99
     
     # Calculate Preço Ideal de Alta Classificação
     if pd.notna(row['Preço Médio de Alta Classificação']):
@@ -131,7 +131,7 @@ def calculate_ideal_prices(row):
     return pd.Series({'Preço Ideal': preco_ideal, 'Preço Ideal de Alta Classificação': preco_ideal_alta})
 
 merged[['Preço Ideal', 'Preço Ideal de Alta Classificação']] = merged.apply(calculate_ideal_prices, axis=1)
-final_table = merged[['Menú', 'Categoria', 'Preço médio', 'Preço Ideal', 'Preço Médio de Alta Classificação', 'Preço Ideal de Alta Classificação']]
+final_table = merged[['Menú', 'Categoria', 'Preço Médio', 'Preço Ideal', 'Preço Médio de Alta Classificação', 'Preço Ideal de Alta Classificação']]
 
 st.title('Análise de Preço Médio dos Restaurantes em Portugal')
 
