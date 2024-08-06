@@ -114,6 +114,7 @@ elasticity_dict = dict(zip(df_elastic['Item'].str.lower(), df_elastic['Classific
 # Use lambda function to create the new 'Elasticity' column
 merged['Elasticity'] = merged['Menú'].apply(lambda x: next((elasticity_dict[item] for item in elasticity_dict if item in x.lower()), 'Unknown'))
 
+# function to calculate ideal prices for both average restaurant and high-rated restaurants
 def calculate_ideal_prices(row):
     # Calculate Preço Ideal
     if row['Preço Médio'] <= np.floor(row['Preço Médio']) + 0.50:
