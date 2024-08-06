@@ -100,7 +100,7 @@ df_elastic = pd.read_excel('item_elasticity.xlsx')
 
 grouped = df.groupby(['Menu', 'Category']).agg({'Price': 'median'}).round(2)
 grouped.reset_index(inplace=True)
-grouped.columns = ['Menú', 'Categoria', 'Preço médio (€)']
+grouped.columns = ['Menú', 'Categoria', 'Preço médio']
 
 names = list(grouped.Menú)
 
