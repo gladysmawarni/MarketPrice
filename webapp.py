@@ -105,7 +105,7 @@ grouped.columns = ['Menú', 'Categoria', 'Preço médio (€)']
 names = list(grouped.Menú)
 
 high_rated = get_highest_rating_price(names, df)
-high_rated_df = pd.DataFrame(high_rated, columns=['Menú', 'Preço de Alta Classificação'])
+high_rated_df = pd.DataFrame(high_rated, columns=['Menú', 'Preço Médio de Alta Classificação'])
 
 merged = grouped.merge(high_rated_df)
 
@@ -114,27 +114,25 @@ elasticity_dict = dict(zip(df_elastic['Item'].str.lower(), df_elastic['Classific
 # Use lambda function to create the new 'Elasticity' column
 merged['Elasticity'] = merged['Menú'].apply(lambda x: next((elasticity_dict[item] for item in elasticity_dict if item in x.lower()), 'Unknown'))
 
-def calculate_ideal_price(row):
-    # If 'Preço de Alta Classificação' is NaN, use only 'Preço médio'
-    if pd.isna(row['Preço de Alta Classificação']):
-        base_price = row['Preço médio (€)'] - 0.01
-    # If median price and high rated price is the same, lower 0.01
-    elif row['Preço médio (€)'] == row['Preço de Alta Classificação']:
-        base_price = row['Preço médio (€)'] - 0.01
+def calculate_ideal_prices(row):
+    # Calculate Preço Ideal
+    if row['Preço Médio'] <= np.floor(row['Preço Médio']) + 0.50:
+        preco_ideal = np.floor(row['Preço Médio']) + 0.59
     else:
-        base_price = (row['Preço médio (€)'] + (row['Preço de Alta Classificação'])) / 2
+        preco_ideal = np.floor(row['Preço Médio']) + 0.99
     
-    if row['Elasticity'] == 'Elastic':
-        # For elastic items, round down to nearest 10 cents and add 9 cents
-        return np.floor(base_price * 10) / 10 + 0.09
+    # Calculate Preço Ideal de Alta Classificação
+    if pd.notna(row['Preço Médio de Alta Classificação']):
+        preco_ideal_alta = np.floor(row['Preço Médio de Alta Classificação']) + 0.99
     else:
-        # For inelastic items, round to nearest 50 cents
-        return round(base_price * 2) / 2
+        preco_ideal_alta = np.nan
+    
+    return pd.Series({'Preço Ideal': preco_ideal, 'Preço Ideal de Alta Classificação': preco_ideal_alta})
 
-merged['Preço Ideal'] = merged.apply(calculate_ideal_price, axis=1)
-merged.drop(columns=['Elasticity'], inplace=True)
+merged[['Preço Ideal', 'Preço Ideal de Alta Classificação']] = merged.apply(calculate_ideal_prices, axis=1)
+final_table = merged[['Menú', 'Categoria', 'Preço Médio', 'Preço Ideal', 'Preço Médio de Alta Classificação', 'Preço Ideal de Alta Classificação']]
 
 st.title('Análise de Preço Médio dos Restaurantes em Portugal')
 
-st.dataframe(filter_dataframe(merged), hide_index=True)
+st.dataframe(filter_dataframe(final_table), hide_index=True)
 
